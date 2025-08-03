@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>遙控無人機學科測驗</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        }
+        button, [type='button'] {
+            background-color: transparent;
+            padding: 0;
+        }
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+        /* 美化 checkbox */
+        .custom-checkbox {
+            appearance: none;
+            background-color: #fff;
+            margin: 0;
+            font: inherit;
+            color: currentColor;
+            width: 1.15em;
+            height: 1.15em;
+            border: 0.15em solid currentColor;
+            border-radius: 0.15em;
+            transform: translateY(-0.075em);
+            display: grid;
+            place-content: center;
+            cursor: pointer;
+        }
+        .custom-checkbox::before {
+            content: "";
+            width: 0.65em;
+            height: 0.65em;
+            transform: scale(0);
+            transition: 120ms transform ease-in-out;
+            box-shadow: inset 1em 1em #3B82F6; /* tailwind blue-500 */
+        }
+        .custom-checkbox:checked::before {
+            transform: scale(1);
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* 手風琴樣式 */
+        details > summary {
+            list-style: none;
+        }
+        details > summary::-webkit-details-marker {
+            display: none;
+        }
+        details > summary::after {
+            content: '+';
+            float: right;
+            font-size: 1.5em;
+            font-weight: bold;
+            line-height: 1;
+            margin-top: -4px;
+        }
+        details[open] > summary::after {
+            content: '−';
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 to-slate-200">
+
+    <div class="min-h-screen flex items-center justify-center p-2 sm:p-4 relative">
+        <div id="app-container" class="w-full max-w-3xl mx-auto">
+
+            <!-- Loading Page -->
+            <div id="loading-page" class="page active text-center">
+                <div class="loader mx-auto"></div>
+                <p id="loading-status" class="mt-4 text-slate-600">正在載入題庫...</p>
+            </div>
+
+            <!-- Home Page -->
+            <div id="home-page" class="page">
+                <div class="w-full max-w-2xl mx-auto">
+                    <div class="bg-white/70 backdrop-blur-sm p-8 md:p-12 rounded-2xl shadow-xl text-center">
+                        <div class="mb-8">
+                            <svg class="w-20 h-20 mx-auto text-slate-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                            </svg>
+                        </div>
+                        <h1 class="text-3xl md:text-4xl font-bold text-slate-800 mb-10">遙控無人機學科測驗</h1>
+                        <div class="space-y-5">
+                            <button id="start-practice-btn" class="w-full max-w-xs mx-auto bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105">
+                                分章學習
+                            </button>
+                            <button id="start-exam-btn" class="w-full max-w-xs mx-auto bg-slate-800 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-slate-900 transition-all duration-300 transform hover:scale-105">
+                                正式模擬考
+                            </button>
+                             <button id="filter-bank-btn" class="w-full max-w-xs mx-auto bg-teal-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-teal-700 transition-all duration-300 transform hover:scale-105">
+                                自訂題庫
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Topic Select Page -->
+            <div id="topic-select-page" class="page">
+                <!-- Content generated by JS -->
+            </div>
+
+            <!-- Quiz Page -->
+            <div id="quiz-page" class="page">
+                <!-- Content generated by JS -->
+            </div>
+
+            <!-- Results Page -->
+            <div id="results-page" class="page">
+                <!-- Content generated by JS -->
+            </div>
+            
+            <!-- Filter Page -->
+            <div id="filter-page" class="page">
+                 <!-- Content generated by JS -->
+            </div>
+
+        </div>
+        
+        <footer id="footer" class="absolute bottom-4 right-4 text-xs text-slate-400 text-right hidden">
+             <p>題庫版本: 114.05.28</p>
+             <p>陳小駿 kelvinego@gmail.com</p>
+        </footer>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmation-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+            <h3 id="modal-title" class="text-lg font-bold text-slate-800 mb-4"></h3>
+            <div id="modal-body" class="text-slate-600 mb-6"></div>
+            <div class="flex justify-end gap-4">
+                <button id="modal-cancel-btn" class="px-4 py-2 rounded-md bg-slate-200 hover:bg-slate-300 transition-colors">
+                    取消
+                </button>
+                <button id="modal-confirm-btn" class="px-4 py-2 rounded-md bg-red-500 text-white hover:bg-red-600 transition-colors">
+                    確定
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <input type="file" id="import-file-input" class="hidden" accept=".json">
+
+
+    <script>
+        // --- 題庫數據 ---
+        let questionBank = [];
+
+        // ==================================================================
+        // == 題庫 JSON 檔案網址 ==
+        // ==================================================================
+        const questionBankUrls = [
+            "https://raw.githubusercontent.com/kelvinego/uav_exam/main/CHAPTER_1.json", // 第一章題庫網址
+            "https://raw.githubusercontent.com/kelvinego/uav_exam/main/CHAPTER_2.json", // 第二章題庫網址
+            "https://raw.githubusercontent.com/kelvinego/uav_exam/main/CHAPTER_3.json", // 第三章題庫網址
+            "https://raw.githubusercontent.com/kelvinego/uav_exam/main/CHAPTER_4.json"  // 第四章題庫網址
+        ];
+        // ==================================================================
+
+        const practiceTopics = [
+            { name: "第一章 民用航空法及相關法規", categories: ["民用航空法及相關法規"] },
+            { name: "第二章 基礎飛行原理", categories: ["基礎飛行原理"] },
+            { name: "第三章 氣象", categories: ["氣象"] },
+            { name: "第四章 緊急處置與飛行決策", categories: ["緊急處置與飛行決策"] }
+        ];
+
+        // --- App State ---
+        let state = {
+            currentMode: 'loading',
+            currentTopic: null,
+            questions: [],
+            answers: {},
+            isSubmitted: false,
+            currentPage: 1,
+            questionsPerPage: 10,
+            examTimer: null,
+            timeLeft: 0,
+            currentExamQuestionIndex: 0,
+            selectedQuestionIds: new Set(),
+            examDistribution: {},
+        };
+
+        // --- DOM Elements ---
+        const pages = document.querySelectorAll('.page');
+        const footer = document.getElementById('footer');
+        const importFileInput = document.getElementById('import-file-input');
+        const loadingStatus = document.getElementById('loading-status');
+
+        // --- Modal ---
+        const modal = document.getElementById('confirmation-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+        const modalCancelBtn = document.getElementById('modal-cancel-btn');
+        const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+        let confirmCallback = null;
+
+        // --- Utility Functions ---
+        const showPage = (pageId) => {
+            pages.forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            footer.style.display = pageId === 'home-page' ? 'block' : 'none';
+        };
+        
+        const shuffleArray = (array) => {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        };
+        
+        const showModal = (title, body, onConfirm) => {
+            modalTitle.textContent = title;
+            modalBody.innerHTML = body;
+            confirmCallback = onConfirm;
+            modal.classList.remove('hidden');
+        };
+
+        const hideModal = () => {
+            modal.classList.add('hidden');
+            confirmCallback = null;
+        };
+
+        const formatTime = (seconds) => {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        };
+
+        const getActiveQuestionBank = () => {
+            if (state.selectedQuestionIds.size === 0) return [];
+            return questionBank.filter(q => state.selectedQuestionIds.has(q.id));
+        };
+
+        // --- Rendering Functions ---
+
+        const renderTopicSelect = () => {
+            const container = document.getElementById('topic-select-page');
+            const activeBank = getActiveQuestionBank();
+            
+            let topicsHtml = '';
+            practiceTopics.forEach(topic => {
+                const questionCount = activeBank.filter(q => topic.categories.includes(q.category)).length;
+                if (questionCount > 0) {
+                    topicsHtml += `
+                        <button data-topic-name="${topic.name}" class="topic-btn w-full p-4 md:p-6 bg-white rounded-lg shadow-md hover:shadow-xl hover:bg-blue-50 transition-all duration-300 text-left flex justify-between items-center">
+                            <h3 class="font-bold text-lg md:text-xl text-slate-800">${topic.name}</h3>
+                            <div class="text-right">
+                                <span class="text-lg font-semibold text-blue-600">${questionCount}</span>
+                                <span class="text-sm text-slate-500 ml-1">題</span>
+                            </div>
+                        </button>
+                    `;
+                }
+            });
+
+            container.innerHTML = `
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-2xl md:text-3xl font-bold text-slate-800">選擇學習主題</h2>
+                    <button class="back-to-home text-slate-600 hover:text-slate-900">返回</button>
+                </div>
+                <div class="space-y-4">${topicsHtml}</div>
+            `;
+            
+            container.querySelectorAll('.topic-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const topic = practiceTopics.find(t => t.name === btn.dataset.topicName);
+                    startPractice(topic);
+                };
+            });
+            container.querySelector('.back-to-home').onclick = goHome;
+            showPage('topic-select-page');
+        };
+        
+        const renderQuizPage = () => {
+             const quizPage = document.getElementById('quiz-page');
+             if (state.currentMode === 'practice') {
+                 renderPracticeMode(quizPage);
+             } else if (state.currentMode === 'exam') {
+                 renderExamMode(quizPage);
+             }
+        };
+
+        const updatePracticeProgressBars = () => {
+            const container = document.getElementById('quiz-page');
+            if (!container || state.currentMode !== 'practice') return;
+
+            const totalQuestionsInChapter = getActiveQuestionBank().filter(q => q.category === state.currentTopic.categories[0]).length;
+            const answeredInChapter = Object.keys(state.answers).filter(id => {
+                const q = state.questions.find(q => q.id == id);
+                return q && q.category === state.currentTopic.categories[0];
+            }).length;
+
+            const chapterProgress = container.querySelector('#chapter-progress');
+            if (chapterProgress) {
+                chapterProgress.querySelector('span:last-child').textContent = `${answeredInChapter} / ${totalQuestionsInChapter}`;
+                chapterProgress.querySelector('.progress-fill').style.width = `${(totalQuestionsInChapter > 0 ? (answeredInChapter / totalQuestionsInChapter) * 100 : 0)}%`;
+            }
+
+            const pageProgress = container.querySelector('#page-progress');
+            if (pageProgress) {
+                const totalPages = Math.ceil(state.questions.length / state.questionsPerPage);
+                pageProgress.querySelector('span:last-child').textContent = `${state.currentPage} / ${totalPages}`;
+                pageProgress.querySelector('.progress-fill').style.width = `${(totalPages > 0 ? (state.currentPage / totalPages) * 100 : 0)}%`;
+            }
+
+            const currentPageProgress = container.querySelector('#current-page-progress');
+            if (currentPageProgress) {
+                const startIndex = (state.currentPage - 1) * state.questionsPerPage;
+                const questionsOnPage = state.questions.slice(startIndex, startIndex + state.questionsPerPage);
+                const answeredOnPageCount = questionsOnPage.filter(q => state.answers[q.id]).length;
+                currentPageProgress.querySelector('span:last-child').textContent = `${answeredOnPageCount} / ${questionsOnPage.length}`;
+                currentPageProgress.querySelector('.progress-fill').style.width = `${(questionsOnPage.length > 0 ? (answeredOnPageCount / questionsOnPage.length) * 100 : 0)}%`;
+            }
+        };
+
+        const renderPracticeMode = (container) => {
+            const totalPages = Math.ceil(state.questions.length / state.questionsPerPage);
+            
+            container.innerHTML = `
+                <!-- Header -->
+                <div class="sticky top-0 bg-slate-100/90 backdrop-blur-sm py-4 z-20 mb-8 px-2 sm:px-4 -mx-2 sm:-mx-4">
+                    <div class="max-w-3xl mx-auto">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg md:text-2xl font-bold text-slate-800">${state.currentTopic.name}</h2>
+                            <button class="back-btn text-blue-600 hover:text-blue-800 font-semibold flex-shrink-0 ml-2">
+                                ${state.currentTopic.name.includes('再') ? '返回主選單' : '返回列表'}
+                            </button>
+                        </div>
+                        <div id="practice-controls" class="space-y-2">
+                            <div id="chapter-progress">
+                                <div class="flex justify-between text-xs text-slate-600 mb-1"><span>本章練習進度</span><span>0 / 0</span></div>
+                                <div class="w-full bg-slate-200 rounded-full h-2"><div class="progress-fill bg-blue-600 h-2 rounded-full" style="width: 0%"></div></div>
+                            </div>
+                            <div id="page-progress">
+                                <div class="flex justify-between text-xs text-slate-600 mb-1"><span>本次練習頁數</span><span>0 / 0</span></div>
+                                <div class="w-full bg-slate-200 rounded-full h-2"><div class="progress-fill bg-green-500 h-2 rounded-full" style="width: 0%"></div></div>
+                            </div>
+                            <div id="current-page-progress" class="mb-4">
+                                <div class="flex justify-between text-xs text-slate-600 mb-1"><span>本頁作答進度</span><span>0 / 0</span></div>
+                                <div class="w-full bg-slate-200 rounded-full h-2"><div class="progress-fill bg-amber-500 h-2 rounded-full" style="width: 0%"></div></div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2">
+                                <button id="load-progress-btn" class="w-full bg-sky-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-sky-600 transition-colors text-sm">載入進度</button>
+                                <button id="save-progress-btn" class="w-full bg-amber-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-amber-600 transition-colors text-sm">儲存進度</button>
+                                <button id="reset-practice-btn" class="w-full bg-red-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-red-600 transition-colors text-sm">重置練習</button>
+                            </div>
+                        </div>
+                        <div id="feedback-message" class="mt-2 p-2 bg-green-100 text-green-800 text-center rounded-md hidden"></div>
+                    </div>
+                </div>
+                <div id="question-list" class="space-y-8"></div>
+                <div class="mt-8 flex justify-between items-center">
+                    <button id="prev-page-btn" class="bg-slate-300 text-slate-800 font-bold py-2 px-6 rounded-lg hover:bg-slate-400 transition-colors disabled:opacity-50">上一頁</button>
+                    <span>${state.currentPage} / ${totalPages}</span>
+                    <button id="next-page-btn" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">下一頁</button>
+                </div>
+            `;
+            
+            updatePracticeDisplay();
+            
+            // Add event listeners
+            container.querySelector('.back-btn').onclick = state.currentTopic.name.includes('再') ? goHome : goToTopicSelect;
+            container.querySelector('#load-progress-btn').onclick = loadProgress;
+            container.querySelector('#save-progress-btn').onclick = saveProgress;
+            container.querySelector('#reset-practice-btn').onclick = () => {
+                showModal('確認清除', '確定要清除本章節的所有作答紀錄嗎？此動作無法復原。', resetPractice);
+            };
+        };
+
+        const updatePracticeDisplay = () => {
+            const container = document.getElementById('quiz-page');
+            const totalPages = Math.ceil(state.questions.length / state.questionsPerPage);
+            const startIndex = (state.currentPage - 1) * state.questionsPerPage;
+            const endIndex = startIndex + state.questionsPerPage;
+            const questionsOnPage = state.questions.slice(startIndex, endIndex);
+
+            const questionList = container.querySelector('#question-list');
+            questionList.innerHTML = '';
+            questionsOnPage.forEach((q, index) => {
+                questionList.appendChild(createQuestionElement(q, startIndex + index + 1));
+            });
+
+            updatePracticeProgressBars();
+
+            const prevBtn = container.querySelector('#prev-page-btn');
+            const nextBtn = container.querySelector('#next-page-btn');
+            
+            prevBtn.disabled = state.currentPage === 1;
+            prevBtn.onclick = () => {
+                if(state.currentPage > 1) {
+                    state.currentPage--;
+                    updatePracticeDisplay();
+                }
+            };
+            
+            if (state.currentPage === totalPages) {
+                nextBtn.textContent = '交卷並訂正';
+                nextBtn.className = 'bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-green-700 transition-colors';
+                nextBtn.onclick = submitPractice;
+            } else {
+                nextBtn.textContent = '下一頁';
+                nextBtn.className = 'bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors';
+                nextBtn.onclick = () => {
+                    if(state.currentPage < totalPages) {
+                        state.currentPage++;
+                        updatePracticeDisplay();
+                    }
+                };
+            }
+        };
+
+        const renderExamMode = (container) => {
+            const currentQuestion = state.questions[state.currentExamQuestionIndex];
+            
+            const distributionText = Object.entries(state.examDistribution)
+                .sort(([keyA], [keyB]) => {
+                    const numA = parseInt(keyA.match(/\d+/)[0]);
+                    const numB = parseInt(keyB.match(/\d+/)[0]);
+                    return numA - numB;
+                })
+                .map(([key, value]) => `${key}: ${value}題`)
+                .join(', ');
+
+            if (!currentQuestion) {
+                container.innerHTML = `<p class="text-center text-slate-600">沒有可用的題目。請先至「自訂題庫」勾選題目。</p>
+                <div class="mt-4 text-center">
+                    <button class="back-to-home bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700">返回主頁</button>
+                </div>
+                `;
+                 container.querySelector('.back-to-home').onclick = goHome;
+                return;
+            };
+
+            let optionsHtml = '';
+            currentQuestion.options.forEach((option, index) => {
+                const optionLabel = String.fromCharCode(65 + index);
+                const isSelected = state.answers[currentQuestion.id] === option;
+                const btnClass = isSelected ? 'bg-blue-500 text-white' : 'bg-white hover:bg-slate-100';
+                optionsHtml += `
+                    <button data-question-id="${currentQuestion.id}" data-option-value="${option}" class="exam-option-btn w-full text-left p-4 rounded-lg border transition-all duration-200 ${btnClass}">
+                        (${optionLabel}) ${option}
+                    </button>
+                `;
+            });
+
+            container.innerHTML = `
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4 sticky top-0 bg-slate-100/80 backdrop-blur-sm py-3 z-10 px-2">
+                    <div class="flex flex-col sm:flex-row sm:items-center">
+                        <h2 class="text-2xl font-bold text-slate-700 mb-1 sm:mb-0 sm:mr-2">模擬考試</h2>
+                        <span class="text-xs text-slate-500">(${distributionText})</span>
+                    </div>
+                    <div id="timer" class="text-lg font-mono bg-slate-800 text-white px-3 py-1 rounded-md self-start sm:self-center mt-2 sm:mt-0">${formatTime(state.timeLeft)}</div>
+                </div>
+                <div class="mb-4">
+                    <div class="w-full bg-slate-200 rounded-full h-2.5">
+                        <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${((state.currentExamQuestionIndex + 1) / state.questions.length) * 100}%"></div>
+                    </div>
+                    <p class="text-right text-sm text-slate-500 mt-1">${state.currentExamQuestionIndex + 1} / ${state.questions.length}</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <p class="text-lg font-semibold text-slate-800 mb-6">${state.currentExamQuestionIndex + 1}. ${currentQuestion.question}</p>
+                    <div class="space-y-3">${optionsHtml}</div>
+                </div>
+
+                <div class="mt-6 flex justify-between items-center">
+                    <button id="exam-prev-btn" class="bg-slate-300 text-slate-800 font-bold py-2 px-6 rounded-lg hover:bg-slate-400 transition-colors disabled:opacity-50">上一題</button>
+                    <button id="exam-next-btn" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">下一題</button>
+                </div>
+            `;
+
+            const prevBtn = container.querySelector('#exam-prev-btn');
+            const nextBtn = container.querySelector('#exam-next-btn');
+
+            prevBtn.disabled = state.currentExamQuestionIndex === 0;
+            prevBtn.onclick = () => {
+                if (state.currentExamQuestionIndex > 0) {
+                    state.currentExamQuestionIndex--;
+                    renderExamMode(container);
+                }
+            };
+
+            if (state.currentExamQuestionIndex === state.questions.length - 1) {
+                nextBtn.textContent = "交卷";
+                nextBtn.className = "bg-green-600 text-white font-bold py-2 px-8 rounded-lg hover:bg-green-700 transition-colors";
+                nextBtn.onclick = () => showModal('確認交卷', '確定要提交您的答案嗎？', submitExam);
+            } else {
+                nextBtn.textContent = "下一題";
+                nextBtn.className = "bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors";
+                nextBtn.onclick = () => {
+                    state.currentExamQuestionIndex++;
+                    renderExamMode(container);
+                };
+            }
+
+            container.querySelectorAll('.exam-option-btn').forEach(btn => {
+                btn.onclick = (e) => handleExamAnswerSelect(e.currentTarget);
+            });
+        };
+
+        const createQuestionElement = (question, number) => {
+            const div = document.createElement('div');
+            div.className = "bg-white p-4 md:p-6 rounded-lg shadow-lg";
+            div.id = `q-${question.id}`;
+
+            let optionsHtml = '';
+            question.options.forEach((option, index) => {
+                const optionLabel = String.fromCharCode(65 + index);
+                const isSelected = state.answers[question.id] === option;
+                const btnClass = isSelected ? 'bg-blue-500 text-white border-blue-500' : 'bg-white hover:bg-slate-100 border-slate-300';
+                optionsHtml += `
+                    <button data-question-id="${question.id}" data-option-value="${option}" class="option-btn w-full text-left p-3 md:p-4 rounded-lg border transition-all duration-200 ${btnClass}">
+                        (${optionLabel}) ${option}
+                    </button>
+                `;
+            });
+
+            div.innerHTML = `
+                <p class="text-base md:text-lg font-semibold text-slate-800 mb-6">${number}. ${question.question}</p>
+                <div class="space-y-3">${optionsHtml}</div>
+            `;
+
+            div.querySelectorAll('.option-btn').forEach(btn => {
+                btn.onclick = (e) => handleAnswerSelect(e.currentTarget);
+            });
+
+            return div;
+        };
+        
+        const renderResultsPage = (questions, answers) => {
+            const resultsPage = document.getElementById('results-page');
+            const score = questions.reduce((acc, q) => acc + (answers[q.id] === q.answer ? 1 : 0), 0);
+            const finalScore = questions.length > 0 ? Math.round((score / questions.length) * 100) : 0;
+            const incorrectQuestions = questions.filter(q => answers[q.id] !== q.answer);
+            
+            let resultsHtml = '';
+            questions.forEach((q, index) => {
+                const userAnswer = answers[q.id];
+                const isCorrect = userAnswer === q.answer;
+                const chapterNumber = practiceTopics.findIndex(t => t.categories.includes(q.category)) + 1;
+
+                let optionsHtml = '';
+                q.options.forEach((option, i) => {
+                    const optionLabel = `(${String.fromCharCode(65 + i)})`;
+                    let style = "text-slate-600";
+                    let indicator = '';
+
+                    if (option === q.answer) {
+                        style = "text-green-800 font-bold";
+                        indicator = `<span class="text-green-500 mr-2">✔</span>`;
+                    }
+                    if (option === userAnswer && !isCorrect) {
+                        style = "text-red-800";
+                        indicator = `<span class="text-red-500 mr-2">✖</span>`;
+                    }
+                    optionsHtml += `<p class="text-sm ${style}">${indicator}${optionLabel} ${option}</p>`;
+                });
+                
+                resultsHtml += `
+                    <div class="p-4 rounded-lg shadow border-l-4 ${isCorrect ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'}">
+                        <div class="flex justify-between items-start mb-2">
+                            <p class="font-semibold text-slate-800 pr-4">${index + 1}. ${q.question}</p>
+                            <span class="text-xs text-slate-400 whitespace-nowrap flex-shrink-0">
+                                (題庫 第${chapterNumber}章 第${q.originalId}題)
+                            </span>
+                        </div>
+                        <div class="space-y-2 mt-4">${optionsHtml}</div>
+                        ${q.explanation ? `
+                        <div class="mt-4 pt-2 border-t border-slate-200">
+                            <p class="text-sm text-slate-700 font-semibold">解析：</p>
+                            <p class="text-sm text-slate-600">${q.explanation}</p>
+                        </div>` : ''}
+                    </div>
+                `;
+            });
+
+            resultsPage.innerHTML = `
+                <div class="text-center">
+                    <h2 class="text-2xl md:text-3xl font-bold text-slate-800 mb-4">測驗結果</h2>
+                    <div class="p-6 md:p-8 rounded-lg bg-slate-100 mb-8">
+                        <p class="text-5xl font-bold text-slate-800 mb-2">
+                            ${finalScore}<span class="text-3xl font-medium ml-1">分</span>
+                        </p>
+                        <p class="text-lg text-slate-600">(答對 ${score} / ${questions.length} 題)</p>
+                    </div>
+                </div>
+                <div class="text-left mb-8">
+                    <h3 class="text-2xl font-bold text-slate-800 mb-4">作答分析</h3>
+                    <div class="space-y-6">${resultsHtml}</div>
+                </div>
+                <div class="mt-8 flex flex-col items-center gap-4">
+                    <button id="restart-exam-btn" class="w-full max-w-sm bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-blue-700 transition-colors">再次練習 (新模擬考)</button>
+                    ${incorrectQuestions.length > 0 ? `<button id="retest-incorrect-btn" class="w-full max-w-sm bg-orange-500 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-orange-600 transition-colors">錯題再測</button>` : ''}
+                    <button class="back-to-home w-full max-w-sm bg-slate-800 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-slate-900 transition-colors">返回主選單</button>
+                </div>
+            `;
+
+            // Add event listeners
+            resultsPage.querySelector('#restart-exam-btn').onclick = startExam;
+            if(incorrectQuestions.length > 0) {
+                 resultsPage.querySelector('#retest-incorrect-btn').onclick = () => startRetest(incorrectQuestions);
+            }
+            resultsPage.querySelectorAll('.back-to-home').forEach(btn => btn.onclick = goHome);
+
+            showPage('results-page');
+        };
+
+        const renderFilterPage = () => {
+            const container = document.getElementById('filter-page');
+            let content = '';
+
+            practiceTopics.forEach((topic, index) => {
+                const questionsInCategory = questionBank.filter(q => topic.categories.includes(q.category));
+                if (questionsInCategory.length > 0) {
+                    const selectedInCategory = questionsInCategory.filter(q => state.selectedQuestionIds.has(q.id)).length;
+                    content += `
+                        <details class="bg-white rounded-lg shadow mb-2" ${index === 0 ? 'open' : ''}>
+                            <summary class="p-4 font-bold text-slate-800 cursor-pointer flex justify-between items-center">
+                                ${topic.name}
+                                <span class="text-sm font-normal text-slate-500">(已選 ${selectedInCategory} / 共 ${questionsInCategory.length} 題)</span>
+                            </summary>
+                            <div class="p-4 border-t border-slate-200">
+                    `;
+                    questionsInCategory.forEach(q => {
+                        const isChecked = state.selectedQuestionIds.has(q.id);
+                        content += `
+                            <label class="flex items-center space-x-3 p-2 rounded hover:bg-slate-100 cursor-pointer">
+                                <input type="checkbox" class="custom-checkbox" data-id="${q.id}" ${isChecked ? 'checked' : ''}>
+                                <span class="text-sm text-slate-700">${q.originalId}. ${q.question}</span>
+                            </label>
+                        `;
+                    });
+                    content += `</div></details>`;
+                }
+            });
+
+            container.innerHTML = `
+                <div class="sticky top-0 bg-slate-100/90 backdrop-blur-sm py-4 z-20 mb-4 px-2 sm:px-4 -mx-2 sm:-mx-4">
+                    <div class="max-w-3xl mx-auto">
+                         <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-2xl md:text-3xl font-bold text-slate-800">自訂題庫</h2>
+                            <button class="back-to-home text-slate-600 hover:text-slate-900">返回</button>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
+                            <button id="export-filter-btn" class="bg-green-600 text-white font-bold py-2 px-3 rounded-lg hover:bg-green-700">匯出篩選</button>
+                            <button id="import-filter-btn" class="bg-purple-600 text-white font-bold py-2 px-3 rounded-lg hover:bg-purple-700">匯入篩選</button>
+                            <button id="select-all-btn" class="bg-gray-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-gray-600">全選</button>
+                            <button id="deselect-all-btn" class="bg-gray-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-gray-600">全不選</button>
+                        </div>
+                         <div id="filter-feedback" class="mt-2 p-2 text-center rounded-md hidden"></div>
+                    </div>
+                </div>
+                <div>
+                    ${content}
+                </div>
+            `;
+            
+            // Add event listeners
+            container.querySelector('.back-to-home').onclick = goHome;
+            container.querySelector('#export-filter-btn').onclick = exportFilter;
+            container.querySelector('#import-filter-btn').onclick = () => importFileInput.click();
+            container.querySelector('#select-all-btn').onclick = selectAll;
+            container.querySelector('#deselect-all-btn').onclick = deselectAll;
+            container.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.onchange = handleFilterChange;
+            });
+
+            showPage('filter-page');
+        };
+
+        // --- Event Handlers & Logic ---
+        
+        const startPractice = (topic) => {
+            state.currentMode = 'practice';
+            state.currentTopic = topic;
+            const activeBank = getActiveQuestionBank();
+            state.questions = activeBank.filter(q => topic.categories.includes(q.category));
+            
+            if (state.questions.length === 0) {
+                alert(`「${topic.name}」中沒有被勾選的題目，請先至「自訂題庫」中選取。`);
+                return;
+            }
+
+            state.answers = {};
+            state.isSubmitted = false;
+            state.currentPage = 1;
+            renderPracticeMode(document.getElementById('quiz-page'));
+            showPage('quiz-page');
+        };
+
+        const startExam = () => {
+            const activeBank = getActiveQuestionBank();
+            if (activeBank.length === 0) {
+                 alert(`沒有選擇任何題目，無法進行模擬考。請先至「自訂題庫」勾選題目。`);
+                return;
+            }
+
+            state.currentMode = 'exam';
+            state.answers = {};
+            state.currentExamQuestionIndex = 0;
+            const shuffled = shuffleArray([...activeBank]);
+            
+            state.questions = shuffled.slice(0, Math.min(40, shuffled.length));
+            
+            state.examDistribution = state.questions.reduce((acc, q) => {
+                const topic = practiceTopics.find(t => t.categories.includes(q.category));
+                const chapterName = topic ? `第${practiceTopics.indexOf(topic) + 1}章` : '其他';
+                acc[chapterName] = (acc[chapterName] || 0) + 1;
+                return acc;
+            }, {});
+
+            state.timeLeft = 60 * 60;
+
+            clearInterval(state.examTimer);
+            state.examTimer = setInterval(updateTimer, 1000);
+            
+            renderExamMode(document.getElementById('quiz-page'));
+            showPage('quiz-page');
+        };
+
+        const updateTimer = () => {
+            state.timeLeft--;
+            const timerEl = document.getElementById('timer');
+            if (timerEl) {
+                timerEl.textContent = formatTime(state.timeLeft);
+            }
+            if (state.timeLeft <= 0) {
+                submitExam();
+            }
+        };
+        
+        const submitExam = () => {
+            clearInterval(state.examTimer);
+            renderResultsPage(state.questions, state.answers);
+        };
+
+        const handleExamAnswerSelect = (button) => {
+            const questionId = parseInt(button.dataset.questionId);
+            const optionValue = button.dataset.optionValue;
+            state.answers[questionId] = optionValue;
+            renderExamMode(document.getElementById('quiz-page')); // Re-render to show selection
+        };
+
+        const startRetest = (incorrectQuestions) => {
+            const retestTopic = { name: '錯題再測' };
+            state.currentMode = 'practice';
+            state.currentTopic = retestTopic;
+            state.questions = incorrectQuestions;
+            state.answers = {};
+            state.isSubmitted = false;
+            state.currentPage = 1;
+            renderPracticeMode(document.getElementById('quiz-page'));
+            showPage('quiz-page');
+        };
+        
+        const goHome = () => {
+            showPage('home-page');
+        };
+
+        const goToTopicSelect = () => {
+            renderTopicSelect();
+        };
+
+        const handleAnswerSelect = (button) => {
+            const questionId = parseInt(button.dataset.questionId);
+            const optionValue = button.dataset.optionValue;
+
+            if (state.answers[questionId] === optionValue) {
+                delete state.answers[questionId];
+            } else {
+                state.answers[questionId] = optionValue;
+            }
+            
+            const questionContainer = document.getElementById(`q-${questionId}`);
+            questionContainer.querySelectorAll('.option-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-500', 'text-white', 'border-blue-500');
+                btn.classList.add('bg-white', 'hover:bg-slate-100', 'border-slate-300');
+            });
+            
+            if (state.answers[questionId]) {
+                 button.classList.add('bg-blue-500', 'text-white', 'border-blue-500');
+                 button.classList.remove('bg-white', 'hover:bg-slate-100', 'border-slate-300');
+            }
+
+            updatePracticeProgressBars();
+        };
+        
+        const submitPractice = () => {
+            renderResultsPage(state.questions, state.answers);
+        };
+
+        const showFeedbackMessage = (msg, isError = false) => {
+            const feedbackEl = document.querySelector('#feedback-message, #filter-feedback');
+            if (feedbackEl) {
+                feedbackEl.textContent = msg;
+                feedbackEl.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+                if(isError) {
+                    feedbackEl.classList.add('bg-red-100', 'text-red-800');
+                } else {
+                    feedbackEl.classList.add('bg-green-100', 'text-green-800');
+                }
+                setTimeout(() => {
+                    feedbackEl.classList.add('hidden');
+                }, 3000);
+            }
+        };
+
+        const saveProgress = () => {
+            try {
+                localStorage.setItem(`practice_${state.currentTopic.name}`, JSON.stringify(state.answers));
+                showFeedbackMessage('進度已儲存！');
+            } catch (e) {
+                showFeedbackMessage('儲存失敗，請稍後再試。', true);
+            }
+        };
+
+        const loadProgress = () => {
+            try {
+                const saved = localStorage.getItem(`practice_${state.currentTopic.name}`);
+                if (saved) {
+                    state.answers = JSON.parse(saved);
+                    renderPracticeMode(document.getElementById('quiz-page'));
+                    showFeedbackMessage('已成功載入上次儲存的進度！');
+                } else {
+                    showFeedbackMessage('找不到本章節的儲存紀錄。');
+                }
+            } catch (e) {
+                showFeedbackMessage('載入失敗，請稍後再試。', true);
+            }
+        };
+        
+        const resetPractice = () => {
+            try {
+                localStorage.removeItem(`practice_${state.currentTopic.name}`);
+                state.answers = {};
+                renderPracticeMode(document.getElementById('quiz-page'));
+                showFeedbackMessage('本章節的作答紀錄已清除！');
+            } catch (e) {
+                showFeedbackMessage('清除失敗，請稍後再試。', true);
+            }
+            hideModal();
+        };
+
+        // --- Filter Page Logic ---
+        const silentSaveFilter = () => {
+            try {
+                localStorage.setItem('droneQuizSelectedIds', JSON.stringify(Array.from(state.selectedQuestionIds)));
+            } catch (e) {
+                console.error("Auto-save failed!", e);
+            }
+        };
+
+        const handleFilterChange = (event) => {
+            const id = parseInt(event.target.dataset.id);
+            if (event.target.checked) {
+                state.selectedQuestionIds.add(id);
+            } else {
+                state.selectedQuestionIds.delete(id);
+            }
+            silentSaveFilter();
+            // Update the count in the summary
+            const summary = event.target.closest('details').querySelector('summary');
+            const topicName = summary.textContent.trim().split('\n')[0];
+            const topic = practiceTopics.find(t => t.name === topicName);
+            const questionsInCategory = questionBank.filter(q => topic.categories.includes(q.category));
+            const selectedInCategory = questionsInCategory.filter(q => state.selectedQuestionIds.has(q.id)).length;
+            summary.querySelector('span').textContent = `(已選 ${selectedInCategory} / 共 ${questionsInCategory.length} 題)`;
+        };
+
+        const selectAll = () => {
+            state.selectedQuestionIds = new Set(questionBank.map(q => q.id));
+            renderFilterPage();
+            silentSaveFilter();
+        };
+
+        const deselectAll = () => {
+            state.selectedQuestionIds.clear();
+            renderFilterPage();
+            silentSaveFilter();
+        };
+        
+        const loadFilter = () => {
+            try {
+                const saved = localStorage.getItem('droneQuizSelectedIds');
+                if (saved) {
+                    const ids = JSON.parse(saved);
+                    state.selectedQuestionIds = new Set(ids);
+                } else {
+                     state.selectedQuestionIds = new Set(questionBank.map(q => q.id));
+                }
+            } catch (e) {
+                console.error("Failed to load filter from localStorage", e);
+                state.selectedQuestionIds = new Set(questionBank.map(q => q.id));
+            }
+        };
+
+        const exportFilter = () => {
+            const ids = Array.from(state.selectedQuestionIds);
+            const blob = new Blob([JSON.stringify(ids, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const now = new Date();
+            const timestamp = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}-${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}${now.getSeconds().toString().padStart(2,'0')}`;
+            a.download = `${timestamp}-${ids.length}題.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+
+        const importFilter = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const ids = JSON.parse(e.target.result);
+                    if (Array.isArray(ids) && ids.every(id => typeof id === 'number')) {
+                        state.selectedQuestionIds = new Set(ids);
+                        renderFilterPage();
+                        silentSaveFilter();
+                        showFeedbackMessage(`成功匯入 ${ids.length} 題篩選設定！`);
+                    } else {
+                        throw new Error('Invalid file format');
+                    }
+                } catch (err) {
+                    showFeedbackMessage('檔案格式錯誤或內容無效！', true);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset input
+        };
+
+        const loadAllQuestionBanks = async () => {
+            try {
+                const responses = await Promise.all(questionBankUrls.map(url => {
+                    if (url.includes("URL_TO_CHAPTER")) {
+                        return Promise.resolve(null);
+                    }
+                    return fetch(url).catch(e => {
+                        console.error(`Failed to fetch ${url}`, e);
+                        return { ok: false, statusText: e.message, url };
+                    });
+                }));
+                
+                const jsonPromises = responses.map((res, index) => {
+                    if (res === null) return Promise.resolve([]);
+                    if (!res.ok) {
+                        throw new Error(`無法載入章節 ${index + 1} 題庫 (URL: ${res.url})`);
+                    }
+                    return res.json();
+                });
+                const allChapters = await Promise.all(jsonPromises);
+                questionBank = [].concat(...allChapters);
+                
+                if (questionBank.length === 0) {
+                     throw new Error("所有題庫網址均無法載入或格式錯誤，請檢查網址設定。");
+                }
+
+                loadFilter();
+                showPage('home-page');
+
+            } catch (error) {
+                loadingStatus.textContent = `題庫載入失敗: ${error.message}`;
+                loadingStatus.classList.add('text-red-600');
+            }
+        };
+
+
+        // --- Initial Setup ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAllQuestionBanks();
+
+            document.getElementById('start-practice-btn').onclick = goToTopicSelect;
+            document.getElementById('start-exam-btn').onclick = startExam;
+            document.getElementById('filter-bank-btn').onclick = renderFilterPage;
+            
+            importFileInput.onchange = importFilter;
+            
+            modalCancelBtn.onclick = hideModal;
+            modalConfirmBtn.onclick = () => {
+                if (confirmCallback) {
+                    confirmCallback();
+                }
+                hideModal();
+            };
+        });
+
+    </script>
+</body>
+</html>
